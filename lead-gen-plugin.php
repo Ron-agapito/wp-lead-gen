@@ -10,24 +10,25 @@
 	add_action('wp_ajax_save_customer', 'customer_save_post');
 	add_action('wp_ajax_nopriv_save_customer', 'customer_save_post');
 	add_action('save_post_customer', 'save_customer_fields');
-	add_action('add_meta_boxes',function(){
+	add_action('add_meta_boxes', function () {
 		add_meta_box('customer_fields', __('Customer Fields'), 'customer_fields_callback', 'customer');
 
 	});
 
 	add_shortcode('lead-gen', function ($atts) {
 
-		if(defined('REST_REQUEST')) return;
+		if (defined('REST_REQUEST'))
+			return;
 
-		$nameLabel = isset( $atts["name-label"] ) && $atts["name-label"] ? $atts["name-label"] : "Full name";
-		$nameMax = isset( $atts["name-max"] ) && $atts["name-max"] ? $atts["name-max"] : "50";
-		$phoneLabel = isset( $atts["phone-label"] ) && $atts["phone-label"] ? $atts["phone-label"]: "Phone name";
-		$phoneMax = isset( $atts["phone-max"] ) && $atts["phone-max"] ? $atts["phone-max"] : "12";
-		$budgetLabel = isset( $atts["budget-label"] )&& $atts["budget-label"]  ? $atts["budget-label"] : "Desired Budget";
-		$budgetMax = isset( $atts["budget-max"] ) && $atts["budget-max"] ? $atts["budget-max"] : "200";
-		$messageLabel = isset( $atts["message-label"] ) && $atts["message-label"] ? $atts["message-label"]: "Message";
-		$rows = isset( $atts["message-rows"] ) && $atts["message-rows"] ? $atts["message-rows"] : "4";
-		$cols = isset( $atts["message-cols"] ) && $atts["message-cols"]  ? $atts["message-cols"] : "50";
+		$nameLabel = isset($atts["name-label"]) && $atts["name-label"] ? $atts["name-label"] : "Full name";
+		$nameMax = isset($atts["name-max"]) && $atts["name-max"] ? $atts["name-max"] : "50";
+		$phoneLabel = isset($atts["phone-label"]) && $atts["phone-label"] ? $atts["phone-label"] : "Phone name";
+		$phoneMax = isset($atts["phone-max"]) && $atts["phone-max"] ? $atts["phone-max"] : "12";
+		$budgetLabel = isset($atts["budget-label"]) && $atts["budget-label"] ? $atts["budget-label"] : "Desired Budget";
+		$budgetMax = isset($atts["budget-max"]) && $atts["budget-max"] ? $atts["budget-max"] : "200";
+		$messageLabel = isset($atts["message-label"]) && $atts["message-label"] ? $atts["message-label"] : "Message";
+		$rows = isset($atts["message-rows"]) && $atts["message-rows"] ? $atts["message-rows"] : "4";
+		$cols = isset($atts["message-cols"]) && $atts["message-cols"] ? $atts["message-cols"] : "50";
 
 		$form = "<form class='w-full max-w-sm customer-form' method='post'>
 	               	%s
@@ -64,7 +65,12 @@
 		wp_enqueue_script('customer', plugin_dir_url(__FILE__) . 'js/customer.js', array(), null, true);
 		wp_localize_script('customer', 'customer', array('ajax_url' => admin_url('admin-ajax.php')));
 	});
-
+	
+	/**
+	 * Displays the customer data and form for admin
+	 *
+	 * @param object $post Object containing the current customer.
+	 */
 	function customer_fields_callback($post)
 	{
 		wp_nonce_field('save_customer', 'customer');
@@ -80,9 +86,14 @@
 		echo "</table>";
 	}
 
+	/**
+	 * Save the customer custom fields
+	 *
+	 * @param INT $post_id ID of the customer for saving custom fields.
+	 */
 	function save_customer_fields($post_id)
 	{
-		if (! isset($_POST['customer']) || ! wp_verify_nonce($_POST['customer'], 'save_customer'))
+		if (!isset($_POST['customer']) || !wp_verify_nonce($_POST['customer'], 'save_customer'))
 			return $post_id;
 
 		if (isset($_POST['name']))
@@ -96,15 +107,19 @@
 
 	}
 
+	/**
+	 * Save the customer as customer post type
+	 *
+	 */
 	function customer_save_post()
 	{
 
-		if (! wp_verify_nonce($_POST['customer'], 'save_customer'))
+		if (!wp_verify_nonce($_POST['customer'], 'save_customer'))
 			wp_send_json_error(array('message' => "Error"));
 
 		$post_data = array('post_title' => sanitize_text_field($_POST['name']), 'post_type' => 'customer', 'post_status' => 'private',);
 		$post_id = wp_insert_post($post_data);
-		if (! is_wp_error($post_id)) {
+		if (!is_wp_error($post_id)) {
 			wp_send_json_success(array('post_id' => $post_id));
 		} else {
 			wp_send_json_error(array('message' => $post_id->get_error_message()));
